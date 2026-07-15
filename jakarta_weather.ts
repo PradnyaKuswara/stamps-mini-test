@@ -20,14 +20,14 @@ interface ForecastResponse {
   city: {
     name: string;
     country: string;
-    timezone: number; // Offset in seconds from UTC
+    timezone: number;
   };
   list: WeatherItem[];
 }
 
 async function getForecast() {
   const apiKey = process.env.OPENWEATHER_API_KEY;
-  console.log(process.env.OPENWEATHER_API_KEY);
+
   if (!apiKey) {
     console.error(
       'Error: OPENWEATHER_API_KEY environment variable is not defined in .env file.',
@@ -46,17 +46,16 @@ async function getForecast() {
 
     const data = (await res.json()) as ForecastResponse;
 
-    console.log(`Weather Forecast for Jakarta, ID (Next 5 Days):\n`);
+    console.log('data', data);
 
-    // Group the forecast entries by local date
+    console.log(`Weather Forecast:`);
+
     const dailyForecasts: { [date: string]: WeatherItem } = {};
 
     for (const item of data.list) {
-      // Adjust timestamp using city timezone offset to get local time in Jakarta
       const localTimeMs = (item.dt + data.city.timezone) * 1000;
-      // Format to YYYY-MM-DD in UTC relative to the adjusted timestamp to represent local date
       const dateStr = new Date(localTimeMs).toISOString().split('T')[0];
-      const localHour = new Date(localTimeMs).getUTCHours(); // getUTCHours() gives local hours because of timezone shift
+      const localHour = new Date(localTimeMs).getUTCHours();
 
       if (!dailyForecasts[dateStr]) {
         dailyForecasts[dateStr] = item;
@@ -64,7 +63,6 @@ async function getForecast() {
         const existingLocalHour = new Date(
           (dailyForecasts[dateStr].dt + data.city.timezone) * 1000,
         ).getUTCHours();
-        // Prefer hour closer to 12:00 local time
         if (Math.abs(localHour - 12) < Math.abs(existingLocalHour - 12)) {
           dailyForecasts[dateStr] = item;
         }
@@ -74,24 +72,37 @@ async function getForecast() {
     // Sort dates and print the forecast for the next 5 days
     const sortedDates = Object.keys(dailyForecasts).sort().slice(0, 5);
 
+    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+
     sortedDates.forEach((dateStr) => {
       const item = dailyForecasts[dateStr];
       const temp = item.main.temp;
-      const weatherDesc = item.weather[0]?.description || 'N/A';
 
       // Formatting date nicely
       const localTimeMs = (item.dt + data.city.timezone) * 1000;
       const dateObj = new Date(localTimeMs);
-      const options: Intl.DateTimeFormatOptions = {
-        weekday: 'short',
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-        timeZone: 'UTC',
-      };
-      const formattedDate = dateObj.toLocaleDateString('en-US', options);
+      const weekday = weekdays[dateObj.getUTCDay()];
+      const day = dateObj.getUTCDate();
+      const month = months[dateObj.getUTCMonth()];
+      const year = dateObj.getUTCFullYear();
 
-      console.log(`${formattedDate}: ${temp.toFixed(1)}°C - ${weatherDesc}`);
+      const formattedDate = `${weekday}, ${day} ${month} ${year}`;
+
+      console.log(`${formattedDate}: ${temp.toFixed(2)}°C`);
     });
   } catch (error: any) {
     console.error('Failed to retrieve weather data:', error.message);

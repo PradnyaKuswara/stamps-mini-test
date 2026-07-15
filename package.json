@@ -4,8 +4,8 @@
   "description": "TypeScript exercises",
   "main": "foo_bar_prime.ts",
   "scripts": {
-    "run:foobar": "ts-node foo_bar_prime.ts",
-    "run:weather": "ts-node jakarta_weather.ts"
+    "task:foobar": "ts-node foo_bar_prime.ts",
+    "task:weather": "ts-node jakarta_weather.ts"
   },
   "dependencies": {
     "dotenv": "^17.4.2"
