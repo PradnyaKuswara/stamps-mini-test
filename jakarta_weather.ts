@@ -46,8 +46,6 @@ async function getForecast() {
 
     const data = (await res.json()) as ForecastResponse;
 
-    console.log('data', data);
-
     console.log(`Weather Forecast:`);
 
     const dailyForecasts: { [date: string]: WeatherItem } = {};
